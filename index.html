@@ -45,6 +45,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:c
 #dock .v{padding:9px 14px;border-radius:999px;color:var(--mut);white-space:nowrap;font-weight:500}
 #dock .v:hover{color:var(--ink);background:var(--glass2)}
 #dock .v[aria-pressed=true]{color:var(--ink);background:var(--glass2);box-shadow:inset 0 0 0 1px var(--ln2)}
+#lab{position:fixed;inset:0;pointer-events:none;z-index:4}#lab span{position:absolute;transform:translate(-50%,-120%);font:600 11.5px/1 var(--ui);color:#fff;background:rgba(10,10,12,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 0 0 1px rgba(255,255,255,.16);padding:5px 9px;border-radius:999px;white-space:nowrap}#lab span i{font-style:normal;color:var(--mut);font-weight:500;margin-left:6px}#lab span.pgm{background:var(--pgm);box-shadow:none}body.cams #lab{display:none}
 #imagSw{position:fixed;left:22px;top:84px;z-index:10;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 14px;border-radius:999px;font-size:12.5px;color:var(--mut)}
 #imagSw .seg{margin:0;padding:2px}
 #imagSw .seg button{padding:5px 12px;font-size:12.5px}
@@ -108,6 +109,7 @@ body.specs #dock{left:calc((100% - 444px) / 2);max-width:calc(100vw - 490px)}
 </header>
 <div id="dock" class="glass"><button id="play"><svg viewBox="0 0 14 14"><path d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg><span>Play tour</span></button></div>
 <div id="imagSw" class="glass">I-MAG<div class="seg" role="group" aria-label="I-MAG content"><button data-i="live" aria-pressed="true">Live camera</button><button data-i="vis" aria-pressed="false">Visuals</button></div></div>
+<div id="lab"></div>
 <div class="hint">Drag to look around · scroll or pinch to zoom</div>
 <section id="mv" aria-label="Camera views"><div id="pgm"><div class="tag"><em>Program</em><b id="pgmId"></b><span id="pgmName"></span></div></div><div id="tiles"></div></section>
 <aside id="specs" class="glass" aria-label="Production specs"></aside>
@@ -139,10 +141,10 @@ const lin = (r, g, b) => new T.Color().setRGB(r / 255, g / 255, b / 255).convert
 S.add(new T.HemisphereLight(0xc9d4ff, 0x14161d, .6));
 const key = new T.DirectionalLight(0xfff1e0, .9); key.position.set(40, 90, 70); S.add(key);
 const rim = new T.DirectionalLight(0x7f9bff, .35); rim.position.set(-60, 40, -50); S.add(rim);
-const LYR = { stage: new T.Group(), led: new T.Group(), truss: new T.Group(), light: new T.Group(), pa: new T.Group(), sfx: new T.Group(), barr: new T.Group(), foh: new T.Group(), scen: new T.Group() };
+const LYR = { stage: new T.Group(), led: new T.Group(), truss: new T.Group(), light: new T.Group(), pa: new T.Group(), sfx: new T.Group(), barr: new T.Group(), foh: new T.Group(), scen: new T.Group(), cams: new T.Group() };
 Object.values(LYR).forEach(g => S.add(g));
 const LK = ["stage", "led", "truss", "light", "pa", "sfx", "barr", "foh", "scen", "scen"];
-const LN = { stage: "Stage", led: "LED screens", truss: "Truss and scaffold", light: "Lighting fixtures", pa: "PA", sfx: "SFX and lasers", barr: "Barricades", foh: "FOH", scen: "Scenery" };
+const LN = { stage: "Stage", led: "LED screens", truss: "Truss and scaffold", light: "Lighting fixtures", pa: "PA", sfx: "SFX and lasers", barr: "Barricades", foh: "FOH", scen: "Scenery", cams: "Camera positions" };
 { // ground
   const fl = new T.Mesh(new T.CircleGeometry(160, 64).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: lin(14, 15, 19), roughness: 1 }));
   fl.position.set(0, -.03, 20); S.add(fl);
@@ -241,11 +243,38 @@ function aimCam(c, aspect) {
   c.cam.fov = vf * 180 / Math.PI; c.cam.aspect = aspect; c.cam.updateProjectionMatrix();
 }
 let pgm = 0;
+/* camera positions layer: body, lens, stand and a field-of-view frustum per camera (visible only in the 3D view, never in camera feeds) */
+const CCOL = ["#ff5d5d", "#4db6ff", "#7bd88f", "#f2b134", "#c084fc", "#ff8fb1", "#5eead4", "#fb923c"];
+const onL1 = o => { o.traverse(n => n.layers.set(1)); return o; };
+CAMS.forEach((c, i) => {
+  const col = new T.Color(CCOL[i % CCOL.length]), mt = new T.MeshBasicMaterial({ color: col });
+  const g = new T.Group(); const body = new T.Mesh(new T.BoxGeometry(.5, .42, .8), mt); const lens = new T.Mesh(new T.CylinderGeometry(.17, .19, .45, 16).rotateX(Math.PI / 2), mt); lens.position.z = -.6; g.add(body, lens); g.scale.setScalar(1.25);
+  const stand = new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(c.pos[0], 0, c.pos[2]), new T.Vector3(...c.pos)]), new T.LineBasicMaterial({ color: col, transparent: true, opacity: .55 }));
+  const ring = new T.Mesh(new T.RingGeometry(.55, .75, 32).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: col, transparent: true, opacity: .6, side: T.DoubleSide })); ring.position.set(c.pos[0], .02, c.pos[2]);
+  const fr = new T.LineSegments(new T.BufferGeometry().setAttribute("position", new T.BufferAttribute(new Float32Array(48), 3)), new T.LineBasicMaterial({ color: col, transparent: true, opacity: .7 })); fr.frustumCulled = false;
+  [g, stand, ring, fr].forEach(o => LYR.cams.add(onL1(o)));
+  const lb = document.createElement("span"); lb.innerHTML = `${esc(c.id)}<i>${esc(c.name)}</i>`; $("#lab").appendChild(lb);
+  c.mk = { g, fr, lb };
+});
+const crn = [[-1, -1], [1, -1], [1, 1], [-1, 1]], v3 = new T.Vector3();
+function updMarkers() {
+  CAMS.forEach((c, i) => {
+    aimCam(c, 16 / 9); c.cam.updateMatrixWorld();
+    c.mk.g.position.copy(c.cam.position); c.mk.g.quaternion.copy(c.cam.quaternion);
+    const d = Math.min(Math.max(c.cam.position.distanceTo(tv), 6), 22), hh = Math.tan(c.cam.fov * Math.PI / 360) * d, hw = hh * 16 / 9, p = c.mk.fr.geometry.attributes.position;
+    const V = crn.map(q => new T.Vector3(q[0] * hw, q[1] * hh, -d).applyMatrix4(c.cam.matrixWorld)); let k = 0; const put = v => p.setXYZ(k++, v.x, v.y, v.z);
+    V.forEach(v => { put(c.cam.position); put(v); }); V.forEach((v, j) => { put(v); put(V[(j + 1) % 4]); }); p.needsUpdate = true;
+  });
+}
+function placeLabels() {
+  const show = LYR.cams.visible && mode !== "cams";
+  CAMS.forEach((c, i) => { const l = c.mk.lb; if (!show) { l.style.display = "none"; return; } v3.copy(c.mk.g.position); v3.y += 1.1; v3.project(P); l.style.display = v3.z < 1 && Math.abs(v3.x) < 1.1 && Math.abs(v3.y) < 1.1 ? "block" : "none"; l.style.left = (v3.x * .5 + .5) * W + "px"; l.style.top = (-v3.y * .5 + .5) * H + "px"; l.classList.toggle("pgm", i === pgm); });
+}
 function imagCam() { const c = CAMS[pgm]; aimCam(c, 2560 / 2816); // I-MAG is a cropped 16:9 picture: keep the vertical field
   return c.cam; }
 
 /* ---------- view camera: orbit + tour ---------- */
-const P = new T.PerspectiveCamera(42, 1, .3, 900);
+const P = new T.PerspectiveCamera(42, 1, .3, 900); P.layers.enable(1);
 const O = { tgt: new T.Vector3(0, 5, 10), th: .32, ph: 1.22, r: 66 };
 function fromPosTgt(pos, tgt) { O.tgt.copy(tgt); const d = new T.Vector3().subVectors(pos, tgt); O.r = d.length(); O.ph = Math.acos(T.MathUtils.clamp(d.y / O.r, -1, 1)); O.th = Math.atan2(d.x, d.z); }
 function applyOrbit() { P.position.set(O.tgt.x + O.r * Math.sin(O.ph) * Math.sin(O.th), O.tgt.y + O.r * Math.cos(O.ph), O.tgt.z + O.r * Math.sin(O.ph) * Math.cos(O.th)); P.lookAt(O.tgt); }
@@ -326,12 +355,14 @@ function frame(t) {
   if (fly) { const k = Math.min(1, (t - fly.t0) / fly.dur), e = ease(k); P.position.lerpVectors(fly.a, fly.b, e); O.tgt.lerpVectors(fly.at, fly.bt, e); P.lookAt(O.tgt); if (k >= 1) { fromPosTgt(P.position, O.tgt); fly = null; if (tour) tour.next = t + 4200; } }
   else { if (tour && t > tour.next) { tour.i = (tour.i + 1) % EV.views.length; goView(tour.i, true); } else if (tour) O.th += .0006; applyOrbit(); }
   R.setScissorTest(false); R.setViewport(0, 0, W, H);
+  if (LYR.cams.visible) updMarkers();
   if (mode !== "cams") { P.aspect = W / H; P.updateProjectionMatrix(); R.render(S, P); }
   else {
     R.clear(); R.setScissorTest(true);
     const draw = (el, c) => { const r = el.getBoundingClientRect(); if (r.width < 2) return; const x = r.left, y = H - r.bottom; aimCam(c, r.width / r.height); R.setViewport(x, y, r.width, r.height); R.setScissor(x, y, r.width, r.height); R.render(S, c.cam); };
     draw($("#pgm"), CAMS[pgm]); $$(".tile").forEach(el => draw(el, CAMS[+el.dataset.i]));
   }
+  placeLabels();
   requestAnimationFrame(frame);
 }
 bar(1); requestAnimationFrame(frame);
