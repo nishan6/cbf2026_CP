@@ -84,7 +84,9 @@
    "SR": null,
    "SL": null
   },
-  "visualText": "CHERRY BLOSSOM FESTIVAL"
+  "kv": {
+   "logo": "logo.webp"
+  }
  },
  "talent": [
   [

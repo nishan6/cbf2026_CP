@@ -198,15 +198,15 @@ const ledMat = map => new T.ShaderMaterial({ uniforms: { map: { value: map }, se
 const flipSL = s => s >= 4;
 const surfMats = {};
 // CENTER
-{ const m = ledMat(videoTex.CENTER || VIS.CENTER.t); m.uniforms.cells.value.set(42, 20); LYR.led.add(new T.Mesh(ledMesh(s => s === 0, (s, u, v) => [u / 42, v / 20]), m)); }
+const centerMat = ledMat(null); { const m = centerMat; m.uniforms.cells.value.set(42, 20); LYR.led.add(new T.Mesh(ledMesh(s => s === 0, (s, u, v) => [u / 42, v / 20]), m)); }
 // wings: curve + inner face carry the wing canvas; I-MAG has its own mesh so it can take the live camera
 for (const [side, b0] of [["SR", 1], ["SL", 4]]) {
   const tex = videoTex[side] || VIS[side].t;
   const rest = ledMat(tex); rest.uniforms.cells.value.set(42, 22);
   LYR.led.add(new T.Mesh(ledMesh(s => s === b0 + 1 || s === b0 + 2, (s, u, v) => [flipSL(s) ? 1 - u / 42 : u / 42, v / 22]), rest));
   const imag = ledMat(tex); imag.uniforms.cells.value.set(20, 22);
-  LYR.led.add(new T.Mesh(ledMesh(s => s === b0, (s, u, v) => [flipSL(s) ? 1 - u / 20 : u / 20, v / 22]), imag));
-  surfMats[side] = { imag, tex };
+  const imagMesh = new T.Mesh(ledMesh(s => s === b0, (s, u, v) => [flipSL(s) ? 1 - u / 20 : u / 20, v / 22]), imag); LYR.led.add(imagMesh);
+  surfMats[side] = { imag, tex, mesh: imagMesh };
 }
 // visuals for the I-MAG when it is not on camera: same wing canvas, I-MAG columns only
 for (const side of ["SR", "SL"]) { const t = surfMats[side].tex.clone(); t.needsUpdate = true; t.repeat.set(20 / 42, 1); t.offset.set(side === "SL" ? 22 / 42 : 0, 0); surfMats[side].visTex = t; }
@@ -214,21 +214,70 @@ const imagRT = new T.WebGLRenderTarget(512, 563, { encoding: T.sRGBEncoding }); 
 let imagMode = "live";
 function setImag(m) { imagMode = m; for (const s of ["SR", "SL"]) surfMats[s].imag.uniforms.map.value = m === "live" ? imagRT.texture : surfMats[s].visTex; $$("#imagSw button").forEach(b => b.setAttribute("aria-pressed", b.dataset.i === m)); }
 
-// generated visuals: soft blossom field, slow light sweep, festival wordmark on CENTER
-const petals = Array.from({ length: 70 }, (_, i) => ({ x: Math.random(), y: Math.random(), r: .02 + Math.random() * .06, s: .02 + Math.random() * .05, w: Math.random() * 6.28, h: Math.random() < .7 ? 330 : 280 }));
-function drawVis(V, t, phase, wordmark) {
-  const { x, c } = V, w = c.width, h = c.height;
-  const g = x.createLinearGradient(0, 0, 0, h); const k = (Math.sin(t * .00012 + phase) + 1) / 2;
-  g.addColorStop(0, `hsl(${255 + k * 40},70%,${10 + k * 6}%)`); g.addColorStop(1, `hsl(${320 + k * 15},75%,${22 + k * 10}%)`);
-  x.fillStyle = g; x.fillRect(0, 0, w, h);
-  x.globalCompositeOperation = "lighter";
-  const sx = ((t * .00008 + phase) % 1.6 - .3) * w; const sg = x.createLinearGradient(sx - w * .25, 0, sx + w * .25, h); sg.addColorStop(0, "rgba(255,255,255,0)"); sg.addColorStop(.5, "rgba(255,210,235,.16)"); sg.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = sg; x.fillRect(0, 0, w, h);
-  for (const p of petals) {
-    const px = ((p.x + Math.sin(t * .0003 * p.s * 20 + p.w) * .04 + phase * .37) % 1) * w, py = ((p.y + t * .00002 * p.s * 10) % 1.1 - .05) * h, r = p.r * h;
-    const rg = x.createRadialGradient(px, py, 0, px, py, r); rg.addColorStop(0, `hsla(${p.h},90%,82%,.55)`); rg.addColorStop(1, `hsla(${p.h},90%,70%,0)`); x.fillStyle = rg; x.beginPath(); x.arc(px, py, r, 0, 6.283); x.fill();
-  }
+// Key visual in the festival's own look (shillongcherryblossom.com): teal smoke, acid-lime brush slashes,
+// hot-pink sparkles, blossom stickers and torn-paper edges, with the 3D festival logo on CENTER.
+const KVC = { deep: "#071c1e", teal: "#13575a", haze: "#5cc7bd", lime: "#c6ff3d", pink: "#ff1f9a", paper: "#d9d9d9" };
+let _sd = 20261120; const rnd = () => (_sd = (_sd * 16807) % 2147483647) / 2147483647;
+const grain = (() => { const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d"), d = x.createImageData(256, 256); for (let i = 0; i < d.data.length; i += 4) { const v = rnd() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 34; } x.putImageData(d, 0, 0); return c; })();
+const blossomImg = (() => { // five-petal blossom like the one in the logo
+  const c = document.createElement("canvas"); c.width = c.height = 160; const x = c.getContext("2d"); x.translate(80, 80);
+  for (let i = 0; i < 5; i++) { x.save(); x.rotate(i * Math.PI * 2 / 5); const g = x.createRadialGradient(0, -34, 4, 0, -34, 40); g.addColorStop(0, "#ffffff"); g.addColorStop(.75, "#ffe3ef"); g.addColorStop(1, "#ff8ab9"); x.fillStyle = g; x.strokeStyle = "#e8174a"; x.lineWidth = 4; x.beginPath(); x.moveTo(0, -4); x.bezierCurveTo(-34, -24, -30, -70, -8, -70); x.quadraticCurveTo(0, -60, 8, -70); x.bezierCurveTo(30, -70, 34, -24, 0, -4); x.fill(); x.stroke(); x.restore(); }
+  x.fillStyle = "#e8174a"; x.beginPath(); x.arc(0, 0, 7, 0, 6.283); x.fill(); for (let i = 0; i < 5; i++) { const a = i * 1.2566 + .63; x.fillRect(Math.cos(a) * 9 - 1.5, Math.sin(a) * 9 - 1.5, 3, 3); x.beginPath(); x.arc(Math.cos(a) * 18, Math.sin(a) * 18, 4, 0, 6.283); x.fill(); }
+  return c; })();
+function makeArt(w, h, n) { // fixed composition per surface; animation moves along it
+  return {
+    blobs: Array.from({ length: 6 }, () => ({ x: rnd(), y: rnd(), r: .35 + rnd() * .5, s: .3 + rnd(), c: rnd() < .5 ? KVC.haze : KVC.teal })),
+    slashes: Array.from({ length: n }, (_, i) => { const x0 = rnd() * .9, y0 = 1.15, ang = -1.05 - rnd() * .35, len = .9 + rnd() * .6; return { x0, y0, x1: x0 + Math.cos(ang) * len * -.55, y1: y0 - len, bend: (rnd() - .5) * .25, wd: .022 + rnd() * .034, col: i % 3 === 2 ? KVC.pink : KVC.lime, ph: rnd() * 10, hairs: Array.from({ length: 9 }, () => [(rnd() - .5), .3 + rnd() * .7, rnd()]) }; }),
+    stars: Array.from({ length: 26 }, () => ({ x: rnd(), y: .08 + rnd() * .84, r: .012 + rnd() * .03, ph: rnd() * 6.28, c: rnd() < .65 ? KVC.pink : "#ffffff" })),
+    stickers: Array.from({ length: Math.round(w / 260) }, () => ({ x: rnd(), y: rnd(), r: .07 + rnd() * .08, rot: rnd() * 6.28, sp: (rnd() - .5) * .6, dy: .015 + rnd() * .03 })),
+    tearT: Array.from({ length: 90 }, () => rnd()), tearB: Array.from({ length: 90 }, () => rnd()),
+  };
+}
+function star(x, cx, cy, r) { x.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, rr = i % 2 ? r * .22 : r; x.lineTo(cx + Math.sin(a) * rr, cy - Math.cos(a) * rr); } x.closePath(); x.fill(); }
+function tear(x, w, h, pts, top) { const d = h * .045; x.fillStyle = KVC.paper; x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = h * .02; x.beginPath(); x.moveTo(0, top ? 0 : h); pts.forEach((p, i) => x.lineTo(i / (pts.length - 1) * w, top ? d * (.35 + p * .65) : h - d * (.35 + p * .65))); x.lineTo(w, top ? 0 : h); x.closePath(); x.fill(); x.shadowBlur = 0; }
+function drawKV(V, art, t, opts = {}) {
+  const { x, c } = V, w = c.width, h = c.height, T_ = t * .001;
+  x.globalCompositeOperation = "source-over"; x.fillStyle = KVC.deep; x.fillRect(0, 0, w, h);
+  x.globalCompositeOperation = "screen"; // drifting teal smoke
+  art.blobs.forEach((b, i) => { const px = (b.x + Math.sin(T_ * .07 * b.s + i) * .12) * w, py = (b.y + Math.cos(T_ * .05 * b.s + i * 2) * .1) * h, r = b.r * Math.max(w, h) * .7; const g = x.createRadialGradient(px, py, 0, px, py, r); g.addColorStop(0, b.c + "aa"); g.addColorStop(1, b.c + "00"); x.fillStyle = g; x.fillRect(0, 0, w, h); });
   x.globalCompositeOperation = "source-over";
-  if (wordmark) { x.save(); let fs = Math.round(h * .16); x.font = `${fs}px "Bebas Neue", "Arial Narrow", sans-serif`; const tw = x.measureText(wordmark).width; if (tw > w * .82) { fs = Math.floor(fs * w * .82 / tw); x.font = `${fs}px "Bebas Neue", "Arial Narrow", sans-serif`; } x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = "rgba(255,255,255,.92)"; x.setTransform(1, 0, -.16, 1, h * .08, 0); x.fillText(wordmark, w / 2, h * .5); x.restore(); }
+  art.slashes.forEach(s => { // dry-brush slashes that draw on, hold, and redraw
+    const cyc = (T_ * .16 + s.ph) % 3, prog = Math.min(1, cyc / .7), fade = cyc > 2.6 ? 1 - (cyc - 2.6) / .4 : 1;
+    const ax = s.x0 * w, ay = s.y0 * h, bx = s.x1 * w, by = s.y1 * h, mx = (ax + bx) / 2 + s.bend * w, my = (ay + by) / 2, L = Math.hypot(bx - ax, by - ay) * 1.1, W_ = s.wd * h * 2.2;
+    x.strokeStyle = s.col; x.lineCap = "round"; x.globalAlpha = .92 * fade;
+    s.hairs.forEach(([off, wd, a]) => { x.lineWidth = W_ * wd * .45; x.globalAlpha = (.35 + a * .6) * fade; x.setLineDash([L * prog, L * 2]); x.beginPath(); x.moveTo(ax + off * W_, ay); x.quadraticCurveTo(mx + off * W_, my, bx + off * W_ * .6, by); x.stroke(); });
+    x.setLineDash([]);
+  });
+  x.globalAlpha = 1;
+  art.stickers.forEach(s => { const py = ((s.y + T_ * s.dy) % 1.2 - .1) * h, px = s.x * w, r = s.r * h; x.save(); x.translate(px, py); x.rotate(s.rot + T_ * s.sp); x.globalAlpha = .95; x.drawImage(blossomImg, -r, -r, r * 2, r * 2); x.restore(); });
+  art.stars.forEach(s => { const k = .55 + .45 * Math.sin(T_ * 2.2 + s.ph); x.globalAlpha = k; x.fillStyle = s.c; x.shadowColor = s.c; x.shadowBlur = s.r * h * .8; star(x, s.x * w, s.y * h, s.r * h * (.7 + .3 * k)); });
+  x.shadowBlur = 0; x.globalAlpha = 1;
+  x.globalCompositeOperation = "overlay"; x.fillStyle = x.createPattern(grain, "repeat"); x.fillRect(0, 0, w, h); x.globalCompositeOperation = "source-over";
+  if (opts.tear) { tear(x, w, h, art.tearT, true); tear(x, w, h, art.tearB, false); }
+}
+const ART = { CENTER: makeArt(1344, 640, 4), SR: makeArt(1344, 704, 3), SL: makeArt(1344, 704, 3) };
+
+// CENTER: 3D festival logo rendered live in its own scene, over the key-visual background
+const kvRT = new T.WebGLRenderTarget(1344, 640, { encoding: T.sRGBEncoding }); kvRT.texture.encoding = T.sRGBEncoding;
+const kvS = new T.Scene(), kvC = new T.PerspectiveCamera(30, 1344 / 640, .1, 60); kvC.position.set(0, 0, 5);
+{ const bg = new T.Mesh(new T.PlaneGeometry(8.4, 4.0), new T.MeshBasicMaterial({ map: VIS.CENTER.t, toneMapped: false })); bg.position.z = -2; kvS.add(bg); }
+const logoG = new T.Group(); kvS.add(logoG);
+const kvSweep = { value: 0 };
+if (EV.led.kv && EV.led.kv.logo) new T.TextureLoader().load(base + EV.led.kv.logo, tex => {
+  tex.encoding = T.sRGBEncoding; tex.anisotropy = 4;
+  const w = 4.3, hgt = w * tex.image.height / tex.image.width, geo = new T.PlaneGeometry(w, hgt), depth = .22, N = 22;
+  const sh = new T.Mesh(geo, new T.MeshBasicMaterial({ map: tex, color: 0x000000, transparent: true, opacity: .45, depthWrite: false, toneMapped: false })); sh.position.set(.06, -.14, -depth - .25); sh.scale.setScalar(1.03); logoG.add(sh);
+  for (let i = N; i >= 1; i--) { const k = i / N, col = new T.Color().setRGB(.42 + .45 * (1 - k), .02, .07 + .05 * (1 - k)); const m = new T.Mesh(geo, new T.MeshBasicMaterial({ map: tex, color: col, alphaTest: .45, toneMapped: false })); m.position.z = -depth * k; logoG.add(m); }
+  const front = new T.Mesh(geo, new T.ShaderMaterial({ uniforms: { map: { value: tex }, sweep: kvSweep }, transparent: true, toneMapped: false,
+    vertexShader: "varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
+    fragmentShader: "uniform sampler2D map;uniform float sweep;varying vec2 vUv;void main(){vec4 c=texture2D(map,vUv);if(c.a<.45)discard;float d=vUv.x-vUv.y*.35-sweep;float s=exp(-d*d*120.)*.55;gl_FragColor=vec4(min(c.rgb+s,1.),1.);}" }));
+  logoG.add(front);
+});
+const petals3d = Array.from({ length: 34 }, () => { const sp = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(blossomImg), transparent: true, depthWrite: false, toneMapped: false })); sp.material.map.encoding = T.sRGBEncoding; const s = .12 + rnd() * .22; sp.scale.set(s, s, 1); sp.position.set((rnd() - .5) * 7, (rnd() - .5) * 3.4, -1.6 + rnd() * 3.2); sp.userData = { vy: .08 + rnd() * .18, ph: rnd() * 6.28, vr: (rnd() - .5) * 1.2 }; kvS.add(sp); return sp; });
+centerMat.uniforms.map.value = videoTex.CENTER || kvRT.texture;
+function animKV(t, dt) {
+  const s = t * .001; logoG.rotation.y = Math.sin(s * .45) * .34; logoG.rotation.x = Math.sin(s * .37) * .07; logoG.position.y = Math.sin(s * .8) * .05; kvSweep.value = ((s * .22) % 1.8) - .4;
+  petals3d.forEach(p => { const u = p.userData; p.position.y -= u.vy * dt; p.position.x += Math.sin(s + u.ph) * .002; p.material.rotation += u.vr * dt; if (p.position.y < -2) p.position.y = 2; });
 }
 
 /* ---------- performers + broadcast cameras ---------- */
@@ -349,9 +398,14 @@ addEventListener("resize", rs); rs();
 let lastVis = 0;
 function frame(t) {
   talent[0].position.x = Math.sin(t / 2600) * 1.8;
-  if (t - lastVis > 33) { lastVis = t; drawVis(VIS.CENTER, t, 0, EV.led.visualText); drawVis(VIS.SR, t, .3); drawVis(VIS.SL, t, .6); for (const k in VIS) if (!videoTex[k]) VIS[k].t.needsUpdate = true; for (const s of ["SR", "SL"]) surfMats[s].visTex.needsUpdate = true; }
+  const dt = Math.min(.1, (t - (frame.last || t)) / 1000); frame.last = t;
+  if (t - lastVis > 33) { lastVis = t; if (!videoTex.CENTER) drawKV(VIS.CENTER, ART.CENTER, t, { tear: true }); for (const k of ["SR", "SL"]) if (!videoTex[k]) { drawKV(VIS[k], ART[k], t); VIS[k].t.needsUpdate = true; surfMats[k].visTex.needsUpdate = true; } VIS.CENTER.t.needsUpdate = true; }
+  if (!videoTex.CENTER) { animKV(t, dt); R.setRenderTarget(kvRT); R.render(kvS, kvC); R.setRenderTarget(null); }
   // live I-MAG: render program camera into the screen texture
-  if (imagMode === "live") { R.setRenderTarget(imagRT); R.setScissorTest(false); R.render(S, imagCam()); R.setRenderTarget(null); }
+  if (imagMode === "live") { // the I-MAG screens are hidden while their own feed renders (no feedback loop)
+    surfMats.SR.mesh.visible = surfMats.SL.mesh.visible = false;
+    R.setRenderTarget(imagRT); R.setScissorTest(false); R.render(S, imagCam()); R.setRenderTarget(null);
+    surfMats.SR.mesh.visible = surfMats.SL.mesh.visible = true; }
   if (fly) { const k = Math.min(1, (t - fly.t0) / fly.dur), e = ease(k); P.position.lerpVectors(fly.a, fly.b, e); O.tgt.lerpVectors(fly.at, fly.bt, e); P.lookAt(O.tgt); if (k >= 1) { fromPosTgt(P.position, O.tgt); fly = null; if (tour) tour.next = t + 4200; } }
   else { if (tour && t > tour.next) { tour.i = (tour.i + 1) % EV.views.length; goView(tour.i, true); } else if (tour) O.th += .0006; applyOrbit(); }
   R.setScissorTest(false); R.setViewport(0, 0, W, H);
