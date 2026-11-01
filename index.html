@@ -12,16 +12,16 @@
 --ui:"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;--disp:"Bebas Neue","Oswald","Arial Narrow",sans-serif}
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{background:#000;color:var(--ink);font:14px/1.45 var(--ui);letter-spacing:-.006em;-webkit-font-smoothing:antialiased;overflow:hidden;font-feature-settings:"tnum" 1}
-button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:2px solid #fff;outline-offset:2px;border-radius:8px}
 #cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #cv.drag{cursor:grabbing}
 .glass{background:var(--glass);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);box-shadow:0 0 0 1px var(--ln)}
-header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:18px;padding:16px 22px;background:linear-gradient(#000c,#0000)}
+header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:18px;padding:calc(16px + env(safe-area-inset-top)) calc(22px + env(safe-area-inset-right)) 16px calc(22px + env(safe-area-inset-left));background:linear-gradient(#000c,#0000)}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
 .brand svg{height:16px;width:auto;color:#fff;flex:none}
 .brand i{width:1px;height:26px;background:var(--ln2)}
-.title b{display:block;font:700 22px/1.1 "Roboto",var(--ui);letter-spacing:-.01em;white-space:nowrap}
+.title{min-width:0}.title b{display:block;font:700 22px/1.1 "Roboto",var(--ui);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .title span{display:block;color:var(--mut);font-size:12px;margin-top:3px;white-space:nowrap}
 .seg{margin-left:auto;display:flex;gap:2px;padding:3px;border-radius:999px}
 .seg button{padding:7px 18px;border-radius:999px;color:var(--mut);font-weight:500;transition:color .2s,background .2s}
@@ -38,7 +38,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:c
 .lr input{accent-color:#fff;width:15px;height:15px;margin:0}
 .lr button{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--glass2)}
 /* dock */
-#dock{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;max-width:calc(100vw - 32px);overflow-x:auto;scrollbar-width:none}
+#dock{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;max-width:calc(100vw - 32px);overflow-x:auto;scrollbar-width:none}
 #dock::-webkit-scrollbar{display:none}
 #play{display:flex;align-items:center;gap:8px;padding:9px 18px 9px 14px;border-radius:999px;background:var(--ink);color:#000;font-weight:600;white-space:nowrap}
 #play svg{width:14px;height:14px}
@@ -87,13 +87,45 @@ body.specs #dock{left:calc((100% - 444px) / 2);max-width:calc(100vw - 490px)}
 #load svg{height:22px;color:#fff;display:block;margin:0 auto 18px}
 #load i{display:block;width:160px;height:2px;background:#222;margin:14px auto 0;border-radius:2px;overflow:hidden}
 #load i b{display:block;height:100%;width:0;background:#fff;transition:width .3s}
-@media (max-width:900px){
-  header{flex-wrap:wrap;gap:10px;padding:12px 14px}.title b{font-size:18px}.title span{display:none}
-  .seg{margin-left:0;order:3}
-  #specs{left:12px;right:12px;width:auto;top:auto;height:55%;bottom:84px}
-  body.specs #dock{left:50%}
-  #tiles{grid-template-columns:repeat(4,1fr)}#mv{inset:110px 12px 12px}
-  #imagSw{top:112px;left:12px}.hint{display:none}
+/* tablets and small laptops */
+@media (max-width:1100px){
+  header{gap:12px;padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right))}
+  .title b{font-size:18px}.seg button{padding:7px 14px}
+  #specs{width:360px;right:16px}body.specs #dock{left:calc((100% - 392px) / 2);max-width:calc(100vw - 420px)}
+  #tiles{grid-template-columns:repeat(4,1fr)}#mv{inset:82px 16px 16px}
+  .hint{display:none}
+}
+/* phones (portrait) */
+@media (max-width:700px){
+  header{flex-wrap:wrap;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;background:linear-gradient(#000e 70%,#0000)}
+  .brand{flex:1;gap:10px}.brand svg{height:12px}.brand i{height:20px}
+  .title b{font-size:15px}.title span{font-size:11px;margin-top:2px}
+  #lyBtn{padding:7px 13px;font-size:13px}
+  header>.seg{order:3;margin:0;width:100%;justify-content:space-between}header>.seg button{flex:1;padding:8px 0}
+  .pop-b{position:fixed;left:12px;right:12px;top:calc(104px + env(safe-area-inset-top));max-height:60vh;overflow:auto}
+  .lr{padding:8px 2px}.lr input{width:18px;height:18px}
+  #imagSw{top:calc(112px + env(safe-area-inset-top));left:12px;font-size:11.5px;padding-left:12px}#imagSw .seg button{padding:5px 10px;font-size:11.5px}
+  #dock{bottom:calc(12px + env(safe-area-inset-bottom));max-width:calc(100vw - 20px)}#play{padding:9px 14px 9px 12px}#dock .v{padding:9px 12px;font-size:13px}
+  #specs{left:10px;right:10px;width:auto;top:auto;height:62%;bottom:calc(10px + env(safe-area-inset-bottom));border-radius:22px;padding:20px 18px}
+  body.specs #dock{display:none}#specs h2{font-size:28px}.big{gap:18px}.big div b{font-size:28px}.kv{font-size:12.5px}
+  #mv{top:calc(108px + env(safe-area-inset-top));left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));overflow:auto;gap:10px}
+  #pgm{flex:none;aspect-ratio:16/9;border-radius:16px}.tag b{font-size:18px}.tag span{display:none}
+  #tiles{grid-template-columns:repeat(2,1fr);gap:8px}
+  #lab span{font-size:10.5px;padding:4px 7px}#lab span i{display:none}
+}
+/* phones in landscape */
+@media (max-height:500px) and (orientation:landscape){
+  header{flex-wrap:nowrap;padding:calc(8px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 8px calc(12px + env(safe-area-inset-left))}
+  .brand svg{height:11px}.title b{font-size:14px}.title span{display:none}
+  header>.seg{order:0;width:auto;margin-left:auto}header>.seg button{flex:none;padding:6px 12px;font-size:13px}#lyBtn{padding:6px 12px;font-size:13px}
+  .pop-b{position:absolute;left:auto;right:0;top:calc(100% + 8px);max-height:70vh}
+  #imagSw{top:calc(56px + env(safe-area-inset-top))}
+  #dock{bottom:calc(8px + env(safe-area-inset-bottom))}#dock .v,#play{padding:7px 11px;font-size:12.5px}
+  #specs{top:calc(56px + env(safe-area-inset-top));bottom:8px;right:calc(10px + env(safe-area-inset-right));left:auto;width:min(380px,48vw);height:auto}
+  body.specs #dock{display:flex;left:calc((100% - min(380px,48vw)) / 2 - 10px);max-width:calc(52vw - 30px)}
+  #mv{top:calc(54px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));right:calc(10px + env(safe-area-inset-right));bottom:8px;flex-direction:row;overflow:hidden}
+  #pgm{flex:1;aspect-ratio:auto}#tiles{grid-template-columns:repeat(2,1fr);width:30%;overflow:auto;align-content:start}
+  #lab span{font-size:10px}#lab span i{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -134,7 +166,8 @@ $("#evTitle").textContent = EV.title; $("#evSub").textContent = EV.subtitle || "
 
 /* ---------- renderer & scene ---------- */
 const cv = $("#cv"), R = new T.WebGLRenderer({ antialias: true, canvas: cv, powerPreference: "high-performance" });
-R.setPixelRatio(Math.min(devicePixelRatio, 2)); R.outputEncoding = T.sRGBEncoding; R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.1;
+const LITE = matchMedia("(pointer: coarse)").matches || Math.min(innerWidth, innerHeight) < 600; // phones and tablets
+let DPR = Math.min(devicePixelRatio, LITE ? 1.5 : 2); R.setPixelRatio(DPR); R.outputEncoding = T.sRGBEncoding; R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.1;
 const S = new T.Scene(); S.background = new T.Color(0x030305); S.fog = new T.Fog(0x030305, 150, 520);
 const dec = (b, C) => { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new C(u.buffer); };
 const lin = (r, g, b) => new T.Color().setRGB(r / 255, g / 255, b / 255).convertSRGBToLinear();
@@ -365,7 +398,8 @@ const ptr = new Map(); let pd = 0;
 cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); ptr.set(e.pointerId, [e.clientX, e.clientY]); if (ptr.size === 2) { const a = [...ptr.values()]; pd = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); } stopTour(); if (fly) { fly = null; fromPosTgt(P.position, O.tgt); } cv.classList.add("drag"); });
 cv.addEventListener("pointermove", e => {
   const q = ptr.get(e.pointerId); if (!q) return; const dx = e.clientX - q[0], dy = e.clientY - q[1]; q[0] = e.clientX; q[1] = e.clientY;
-  if (ptr.size === 2) { const a = [...ptr.values()], d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); O.r = T.MathUtils.clamp(O.r * pd / d, 3, 260); pd = d; return; }
+  if (ptr.size === 2) { const a = [...ptr.values()], d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); O.r = T.MathUtils.clamp(O.r * pd / d, 3, 260); pd = d;
+    const k = O.r * .0011 / 2, right = new T.Vector3().setFromMatrixColumn(P.matrix, 0); O.tgt.addScaledVector(right, -dx * k).y = T.MathUtils.clamp(O.tgt.y + dy * k, 0, 30); return; }
   if (e.shiftKey || e.buttons === 2) { const k = O.r * .0016, right = new T.Vector3().setFromMatrixColumn(P.matrix, 0), up = new T.Vector3(0, 1, 0); O.tgt.addScaledVector(right, -dx * k).addScaledVector(up, dy * k); return; }
   O.th -= dx * .005; O.ph = T.MathUtils.clamp(O.ph - dy * .005, .12, 1.62);
   $$("#dock .v").forEach(b => b.setAttribute("aria-pressed", "false"));
@@ -417,16 +451,22 @@ setImag("live");
 
 /* ---------- loop ---------- */
 let W = 1, H = 1;
-function rs() { W = innerWidth; H = innerHeight; R.setSize(W, H, false); }
-addEventListener("resize", rs); rs();
+function rs() { W = innerWidth; H = innerHeight; R.setPixelRatio(DPR); R.setSize(W, H, false); }
+addEventListener("resize", rs); addEventListener("orientationchange", () => setTimeout(rs, 200)); rs();
+// adaptive resolution: keep the frame rate smooth on slower devices
+const perf = { n: 0, ms: 0, cap: DPR };
+function adapt(dtms) { perf.n++; perf.ms += dtms; if (perf.n < 90) return; const avg = perf.ms / perf.n; perf.n = perf.ms = 0;
+  if (avg > 30 && DPR > 1) { DPR = Math.max(1, DPR - .25); rs(); } else if (avg < 17 && DPR < perf.cap) { DPR = Math.min(perf.cap, DPR + .25); rs(); } }
+let tick = 0;
 let lastVis = 0;
 function frame(t) {
   talent[0].position.x = Math.sin(t / 2600) * 1.8;
-  const dt = Math.min(.1, (t - (frame.last || t)) / 1000); frame.last = t;
-  if (t - lastVis > 33) { lastVis = t; if (!videoTex.CENTER) drawKV(VIS.CENTER, ART.CENTER, t); for (const k of ["SR", "SL"]) if (!videoTex[k]) { drawKV(VIS[k], ART[k], t, { sticker: STICK[k] }); VIS[k].t.needsUpdate = true; surfMats[k].visTex.needsUpdate = true; } VIS.CENTER.t.needsUpdate = true; }
-  if (!videoTex.CENTER) { animKV(t, dt); R.setRenderTarget(kvRT); R.render(kvS, kvC); R.setRenderTarget(null); }
+  const dt = Math.min(.1, (t - (frame.last || t)) / 1000); if (frame.last) adapt(t - frame.last); frame.last = t; tick++;
+  const every = LITE ? 2 : 1; // phones refresh the screen content every other frame
+  if (t - lastVis > (LITE ? 66 : 33)) { lastVis = t; if (!videoTex.CENTER) drawKV(VIS.CENTER, ART.CENTER, t); for (const k of ["SR", "SL"]) if (!videoTex[k]) { drawKV(VIS[k], ART[k], t, { sticker: STICK[k] }); VIS[k].t.needsUpdate = true; surfMats[k].visTex.needsUpdate = true; } VIS.CENTER.t.needsUpdate = true; }
+  if (!videoTex.CENTER && tick % every === 0) { animKV(t, dt * every); R.setRenderTarget(kvRT); R.render(kvS, kvC); R.setRenderTarget(null); }
   // live I-MAG: render program camera into the screen texture
-  if (imagMode === "live") { // the I-MAG screens are hidden while their own feed renders (no feedback loop)
+  if (imagMode === "live" && tick % every === 1 % every) { // the I-MAG screens are hidden while their own feed renders (no feedback loop)
     surfMats.SR.mesh.visible = surfMats.SL.mesh.visible = false;
     R.setRenderTarget(imagRT); R.setScissorTest(false); R.render(S, imagCam()); R.setRenderTarget(null);
     surfMats.SR.mesh.visible = surfMats.SL.mesh.visible = true; }
@@ -434,7 +474,8 @@ function frame(t) {
   else { if (tour && t > tour.next) { tour.i = (tour.i + 1) % EV.views.length; goView(tour.i, true); } else if (tour) O.th += .0006; applyOrbit(); }
   R.setScissorTest(false); R.setViewport(0, 0, W, H);
   if (LYR.cams.visible) updMarkers();
-  if (mode !== "cams") { P.aspect = W / H; P.updateProjectionMatrix(); R.render(S, P); }
+  if (mode !== "cams") { P.aspect = W / H; // narrow screens keep the same sideways view as a 16:9 laptop
+    P.fov = P.aspect < 1.6 ? Math.min(88, 2 * Math.atan(Math.tan(21 * Math.PI / 180) * 1.6 / P.aspect) * 180 / Math.PI) : 42; P.updateProjectionMatrix(); R.render(S, P); }
   else {
     R.clear(); R.setScissorTest(true);
     const draw = (el, c) => { const r = el.getBoundingClientRect(); if (r.width < 2) return; const x = r.left, y = H - r.bottom; aimCam(c, r.width / r.height); R.setViewport(x, y, r.width, r.height); R.setScissor(x, y, r.width, r.height); R.render(S, c.cam); };
