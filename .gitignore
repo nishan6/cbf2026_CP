@@ -1,0 +1,6 @@
+src/internal.js
+build/
+*.mvr
+*.mvr.zip
+__pycache__/
+.DS_Store
