@@ -1,0 +1,354 @@
+{
+ "id": "cbf2026",
+ "title": "Cherry Blossom Festival 2026",
+ "subtitle": "Production preview · Shillong",
+ "presentedBy": "HMBL Entertainment",
+ "venue": "venue.json",
+ "led": {
+  "pitch": "P3.9",
+  "panel": "50 × 50 cm",
+  "surfaces": [
+   {
+    "id": 0,
+    "name": "CENTER",
+    "px": [
+     5376,
+     2560
+    ],
+    "m": "21 × 10 m",
+    "area": 210
+   },
+   {
+    "id": 1,
+    "name": "SR I-MAG",
+    "px": [
+     2560,
+     2816
+    ],
+    "m": "10 × 11 m",
+    "area": 110
+   },
+   {
+    "id": 2,
+    "name": "SR CURVE",
+    "px": [
+     896,
+     2816
+    ],
+    "m": "3.5 × 11 m",
+    "area": 38.15
+   },
+   {
+    "id": 3,
+    "name": "SR",
+    "px": [
+     1920,
+     2816
+    ],
+    "m": "7.5 × 11 m",
+    "area": 82.5
+   },
+   {
+    "id": 4,
+    "name": "SL I-MAG",
+    "px": [
+     2560,
+     2816
+    ],
+    "m": "10 × 11 m",
+    "area": 110
+   },
+   {
+    "id": 5,
+    "name": "SL CURVE",
+    "px": [
+     896,
+     2816
+    ],
+    "m": "3.5 × 11 m",
+    "area": 38.15
+   },
+   {
+    "id": 6,
+    "name": "SL",
+    "px": [
+     1920,
+     2816
+    ],
+    "m": "7.5 × 11 m",
+    "area": 82.5
+   }
+  ],
+  "video": {
+   "CENTER": null,
+   "SR": null,
+   "SL": null
+  },
+  "visualText": "CHERRY BLOSSOM FESTIVAL"
+ },
+ "talent": [
+  [
+   0,
+   1.83,
+   5
+  ],
+  [
+   -2,
+   1.83,
+   3.4
+  ],
+  [
+   2,
+   1.83,
+   3.4
+  ]
+ ],
+ "cameras": [
+  {
+   "id": "CAM 01",
+   "name": "FOH Master",
+   "pos": [
+    -3.6,
+    4.5,
+    56.8
+   ],
+   "aim": [
+    0,
+    4.5,
+    2
+   ],
+   "f": 10,
+   "sw": 9.6,
+   "lens": "≈14–16× broadcast zoom",
+   "role": "Full-stage master and safety wide"
+  },
+  {
+   "id": "CAM 02",
+   "name": "FOH Tight",
+   "pos": [
+    3.6,
+    4.5,
+    56.8
+   ],
+   "aim": "talent",
+   "f": 200,
+   "sw": 9.6,
+   "lens": "≈86–95× box lens",
+   "role": "Artist close-ups from FOH"
+  },
+  {
+   "id": "CAM 03",
+   "name": "Stage Left Mid-field",
+   "pos": [
+    17,
+    3.5,
+    34
+   ],
+   "aim": "talent",
+   "f": 40,
+   "sw": 9.6,
+   "lens": "To be confirmed",
+   "role": "Lead vocalist and centre stage, medium shots"
+  },
+  {
+   "id": "CAM 04",
+   "name": "Stage Right Mid-field",
+   "pos": [
+    -17,
+    3.5,
+    34
+   ],
+   "aim": "talent",
+   "f": 40,
+   "sw": 9.6,
+   "lens": "To be confirmed",
+   "role": "Centre stage from stage right"
+  },
+  {
+   "id": "CAM 05",
+   "name": "Pit Roaming",
+   "pos": [
+    6,
+    1.5,
+    11.5
+   ],
+   "aim": "talent",
+   "f": 24,
+   "sw": 35.9,
+   "lens": "Mirrorless on gimbal",
+   "role": "Artist interaction and low angles"
+  },
+  {
+   "id": "CAM 06",
+   "name": "Roaming Gimbal",
+   "pos": [
+    4,
+    1.6,
+    31
+   ],
+   "aim": "talent",
+   "f": 35,
+   "sw": 35.9,
+   "lens": "Gimbal camera system",
+   "role": "Crowd, atmosphere and moving shots"
+  },
+  {
+   "id": "CAM 07",
+   "name": "DJ Console GoPro",
+   "pos": [
+    -17.1,
+    2.95,
+    12.4
+   ],
+   "aim": [
+    -17.1,
+    2.6,
+    40
+   ],
+   "f": 2,
+   "sw": 6.17,
+   "lens": "GoPro, ultra-wide",
+   "role": "DJ perspective"
+  }
+ ],
+ "switching": "One 2 M/E switcher at FOH: M/E 1 broadcast (live stream and recording), M/E 2 IMAG to SR and SL I-MAG.",
+ "views": [
+  {
+   "name": "FOH",
+   "pos": [
+    0,
+    6,
+    54
+   ],
+   "tgt": [
+    0,
+    5.5,
+    0
+   ]
+  },
+  {
+   "name": "Aerial",
+   "pos": [
+    40,
+    44,
+    64
+   ],
+   "tgt": [
+    0,
+    3,
+    8
+   ]
+  },
+  {
+   "name": "Stage left",
+   "pos": [
+    31,
+    5.5,
+    26
+   ],
+   "tgt": [
+    -4,
+    6,
+    1
+   ]
+  },
+  {
+   "name": "Stage right",
+   "pos": [
+    -31,
+    5.5,
+    26
+   ],
+   "tgt": [
+    4,
+    6,
+    1
+   ]
+  },
+  {
+   "name": "Front pit",
+   "pos": [
+    -8.5,
+    1.7,
+    12.2
+   ],
+   "tgt": [
+    0,
+    6,
+    -2
+   ]
+  },
+  {
+   "name": "B-stage",
+   "pos": [
+    0,
+    3.6,
+    31
+   ],
+   "tgt": [
+    0,
+    4,
+    15
+   ]
+  },
+  {
+   "name": "Performer's view",
+   "pos": [
+    0,
+    3.6,
+    7.6
+   ],
+   "tgt": [
+    0,
+    2.4,
+    40
+   ]
+  }
+ ],
+ "specs": {
+  "stage": [
+   [
+    "Main stage",
+    "Deck at +1.83 m, about 46 m wide including wings"
+   ],
+   [
+    "Thrust",
+    "Runs from the main stage to the B-stage"
+   ],
+   [
+    "B-stage",
+    "Forward platform at +1.83 m"
+   ],
+   [
+    "DJ riser",
+    "Stage-right front, at deck height"
+   ],
+   [
+    "Roof",
+    "Truss roof structure to about 18 m"
+   ],
+   [
+    "Scenery",
+    "Two cherry blossom trees and foliage"
+   ],
+   [
+    "FOH",
+    "About 40 m from the main stage edge"
+   ]
+  ],
+  "audio": [
+   [
+    "Main arrays",
+    "Left and right hangs"
+   ],
+   [
+    "Outfill arrays",
+    "Left and right hangs"
+   ],
+   [
+    "Subwoofers",
+    "14 on the ground in the front pit"
+   ]
+  ]
+ }
+}
